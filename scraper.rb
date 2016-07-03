@@ -1,25 +1,41 @@
-# This is a template for a Ruby scraper on morph.io (https://morph.io)
-# including some code snippets below that you should find helpful
+require 'scraperwiki'
+require 'mechanize'
+require 'nokogiri'
+require 'active_support'
+require 'active_support/core_ext'
+require './petitions'
 
-# require 'scraperwiki'
-# require 'mechanize'
-#
-# agent = Mechanize.new
-#
-# # Read in a page
-# page = agent.get("http://foo.com")
-#
-# # Find somehing on the page using css selectors
-# p page.at('div.content')
-#
-# # Write out to the sqlite database using scraperwiki library
-# ScraperWiki.save_sqlite(["name"], {"name" => "susan", "occupation" => "software developer"})
-#
-# # An arbitrary query against the database
-# ScraperWiki.select("* from data where 'name'='peter'")
+Time.zone = 'Brisbane'
 
-# You don't have to do things with the Mechanize or ScraperWiki libraries.
-# You can use whatever gems you want: https://morph.io/documentation/ruby
-# All that matters is that your final data is written to an SQLite database
-# called "data.sqlite" in the current working directory which has at least a table
-# called "data".
+URI_LIST = 'http://www.epetitions.brisbane.qld.gov.au/'
+URI_ITEM = 'http://www.epetitions.brisbane.qld.gov.au/petition/view/pid/%{petition_num}'
+URI_ITEM_SIGN = 'http://www.epetitions.brisbane.qld.gov.au/petition/sign/pid/%{petition_num}'
+
+petitions_helper = Petitions.new
+current_time = Time.zone.now
+
+# Get and save petitions
+petitions_hash = []
+open(URI_LIST) do |i|
+  petitions_page = i.read
+  petitions_hash = petitions_helper.get_petitions(petitions_page)
+end
+
+petitions_hash.each do |petition|
+  uri = URI_ITEM % {petition_num: petition[:reference_id]}
+  new_hash = {
+      retrieved_at: current_time,
+      url: uri,
+      sign_uri: URI_ITEM_SIGN % {petition_num: petition[:reference_id]}
+  }
+
+  open(uri) do |i|
+    petition_page = i.read
+    petition_hash = petitions_helper.get_item(petition_page)
+
+    new_hash.merge!(petition).merge!(petition_hash)
+
+  end
+
+  ScraperWiki.save_sqlite([:reference_id, :signatures], new_hash, 'data')
+end
