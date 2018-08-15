@@ -1,4 +1,4 @@
-# Brisbane City COuncil Petitions
+# Brisbane City Council Petitions
 
 Online petitions from Brisbane City Council, Queensland, Australia.
 
