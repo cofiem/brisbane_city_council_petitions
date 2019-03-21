@@ -28,7 +28,7 @@ class BrisbaneCityCouncilPetitions:
 
     cache_chars = string.digits + string.ascii_letters
     local_cache_dir = 'cache'
-    use_cache = False
+    use_cache = True
 
     def run(self):
         current_time = datetime.today()
@@ -42,6 +42,9 @@ class BrisbaneCityCouncilPetitions:
             petition_list_page = self.download_html(self.petition_list)
             petition_items = self.parse_petition_list_page(petition_list_page)
 
+            count_added = 0
+            count_skipped = 0
+
             print('Reading petitions')
             for petition_item in petition_items:
                 reference_id = petition_item['reference_id']
@@ -54,10 +57,15 @@ class BrisbaneCityCouncilPetitions:
                 if not self.sqlite_petition_row_exists(db_conn, db_data['reference_id'], db_data['signatures']):
                     print('Adding {} - "{}"'.format(db_data['reference_id'], db_data['title']))
                     self.sqlite_petition_row_insert(db_conn, db_data)
+                    count_added += 1
                 else:
                     print('Already exists {} - "{}"'.format(db_data['reference_id'], db_data['title']))
+                    count_skipped += 1
 
                 db_conn.commit()
+
+            print('Added {}, skipped {}, total {}'.format(count_added, count_skipped, count_added + count_skipped))
+            print('Completed successfully.')
 
         finally:
             if db_conn:
