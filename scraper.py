@@ -77,7 +77,7 @@ class BrisbaneCityCouncilPetitions:
         if tree is None:
             return result
 
-        rows = tree.xpath('//table[@class="petitions"]/tr')[1:]
+        rows = tree.xpath("//table[contains(@class, 'petitions')]/tr")[1:]
         for row in rows:
             cells = row.xpath('td')
             reference_id = cells[0][0].get('href').split('/')[-1]
@@ -93,7 +93,7 @@ class BrisbaneCityCouncilPetitions:
         return result
 
     def parse_petition_item_page(self, reference_id, url, current_time, tree) -> Dict[str, Any]:
-        title = tree.xpath('//div[@id="content"]/h1/text()')[0].strip()
+        title = tree.xpath('//div[@class="page-title"]/h1/text()')[0].strip()
         principal = tree.xpath('((//table[@class="petition-details"]//tr)[1]/td)[2]/text()')[0].strip()
         closed_at = tree.xpath('((//table[@class="petition-details"]//tr)[2]/td)[2]/text()')[0].strip()
         signatures = tree.xpath('((//table[@class="petition-details"]//tr)[3]/td)[2]')[0].text_content()
